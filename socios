@@ -1,0 +1,423 @@
+Public Class FrmABMSocios
+    Dim DA As New OleDb.OleDbDataAdapter
+    Dim DT As New DataTable
+    Dim NroReg, cantidadregistros As Integer
+    Dim sqlstr, ruta, nombrefoto, nombrefotoruta As String
+
+
+    Private Sub Form1_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        NroReg = 0
+        CN.Open()
+
+        DA = New OleDb.OleDbDataAdapter("select * from socios order by codsocio asc", CN.ConnectionString)
+
+        DT.Clear()
+        DA.Fill(DT)
+        NroReg = 0
+        llenarform()
+
+        CN.Close()
+    End Sub
+
+    Private Sub llenarform()
+
+        'If IsDBNull(DT.Rows(NroReg)("Foto")) Then
+        '    nombrefotoruta = "faltaimagen.png"
+        'Else
+        '    nombrefotoruta = DT.Rows(NroReg)("Foto")
+        'End If
+
+        Try
+            nombrefotoruta = DT.Rows(NroReg)("Foto")
+        Catch ex As Exception
+            nombrefotoruta = "faltaimagen.png"
+        End Try
+        ruta = "c:\Pablo_18hs\fotos\" & nombrefotoruta
+
+        Try
+            TxtTipoDocumento.Text = DT.Rows(NroReg)("tipodocumento")
+            TxtDireccion.Text = DT.Rows(NroReg)("direccion")
+            TxtTelefono.Text = DT.Rows(NroReg)("telefono")
+            TxtCodSocio.Text = DT.Rows(NroReg)("codsocio")
+            TxtNombre.Text = DT.Rows(NroReg)("Nombre")
+            TxtCodPostal.Text = DT.Rows(NroReg)("codpostal")
+            TxtApellido.Text = DT.Rows(NroReg)("apellido")
+            PbxFotoSocio.ImageLocation = ruta
+        Catch ex As Exception
+
+        End Try
+
+
+
+
+
+
+    End Sub
+
+    Private Sub BtnUltimoRegistro_Click(sender As Object, e As EventArgs) Handles BtnUltimoRegistro.Click
+        cantidadregistros = DT.Rows.Count
+        NroReg = cantidadregistros - 1
+
+        llenarform()
+    End Sub
+
+    Private Sub BtnAvance_Click(sender As Object, e As EventArgs) Handles BtnAvance.Click
+
+        Try
+            NroReg = NroReg + 1
+            llenarform()
+        Catch ex As Exception
+            NroReg = NroReg - 1
+            llenarform()
+        End Try
+
+    End Sub
+
+    Private Sub BtnRetroceso_Click(sender As Object, e As EventArgs) Handles BtnRetroceso.Click
+
+        Try
+            NroReg = NroReg - 1
+            llenarform()
+        Catch ex As Exception
+            NroReg = NroReg + 1
+            llenarform()
+        End Try
+
+    End Sub
+
+    Private Sub BtnEliminar_Click(sender As Object, e As EventArgs) Handles BtnEliminar.Click
+        'Dim sqlstr As String
+
+        Dim comando_borrar As New OleDb.OleDbCommand()
+
+        sqlstr = "delete * from socios where codsocio=" & TxtCodSocio.Text
+
+        comando_borrar.CommandText = sqlstr
+        comando_borrar.Connection = CN
+
+        If MsgBox("Desea Borrar el Registro Actual", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+            CN.Open()
+            Try
+                comando_borrar.ExecuteNonQuery()
+            Catch ex As Exception
+
+            End Try
+            'comando_borrar.ExecuteNonQuery()
+
+            MessageBox.Show("Se ha Eliminado el Registro", "Atención")
+
+            DA = New OleDb.OleDbDataAdapter("select * from socios order by codsocio asc", CN.ConnectionString)
+
+            DT.Clear()
+            DA.Fill(DT)
+            cantidadregistros = DT.Rows.Count
+            NroReg = cantidadregistros - 1
+            llenarform()
+
+            CN.Close()
+        End If
+    End Sub
+
+    Private Sub BtnAgregar_Click(sender As Object, e As EventArgs) Handles BtnAgregar.Click
+        GbxNavegador.Enabled = False
+        GbxModificadores.Enabled = False
+        BtnCancelar.Visible = True
+        BtnBuscaFoto.Visible = True
+        TxtCodSocio.ReadOnly = False
+        TxtCodSocio.Focus()
+        TxtNombre.ReadOnly = False
+        TxtApellido.ReadOnly = False
+        TxtTipoDocumento.ReadOnly = False
+        TxtNroDocumento.ReadOnly = False
+        TxtDireccion.ReadOnly = False
+        TxtTelefono.ReadOnly = False
+        TxtCodPostal.ReadOnly = False
+
+        PbxFotoSocio.ImageLocation = "c:\Pablo_18hs\fotos\faltaimagen.png"
+        TxtCodSocio.Clear()
+        TxtNombre.Clear()
+        TxtApellido.Clear()
+        TxtTipoDocumento.Clear()
+        TxtNroDocumento.Clear()
+        TxtDireccion.Clear()
+        TxtTelefono.Clear()
+        TxtCodPostal.Clear()
+
+        BtnConfirmarAgrega.Visible = True
+
+
+    End Sub
+
+
+
+    Private Sub BtnConfirmarAgrega_Click(sender As Object, e As EventArgs) Handles BtnConfirmarAgrega.Click
+
+        If IsNumeric(TxtCodSocio.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtCodSocio.Clear()
+            TxtCodSocio.Focus()
+            Exit Sub
+        End If
+
+        If IsNumeric(TxtTelefono.Text) Then
+        Else
+            MessageBox.Show("Ingrese una Valor Numérico", "Atención")
+            TxtTelefono.Clear()
+            TxtTelefono.Focus()
+            Exit Sub
+        End If
+
+
+        If IsNumeric(TxtCodPostal.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtCodPostal.Clear()
+            TxtCodPostal.Focus()
+            Exit Sub
+        End If
+
+
+        Dim comando_agregar As New OleDb.OleDbCommand()
+        Dim nombre, apellido, tipodocumento As String
+        Dim codsocio As Integer
+
+        codsocio = Trim(TxtCodSocio.Text)
+        nombre = UCase(Trim(TxtNombre.Text))
+        apellido = UCase(Trim(TxtApellido.Text))
+
+        tipodocumento = UCase(Trim(TxtTipoDocumento.Text))
+
+        sqlstr =
+       "Insert Into socios(codsocio,nombre,apellido,tipodocumento,nrodocumento,direccion,telefono,codpostal,foto) " _
+                  & "Values (" _
+                  & "'" & codsocio & "', " _
+                  & "'" & nombre & "', " _
+                  & "'" & apellido & "', " _
+                  & "'" & TxtDireccion.Text & "', " _
+                  & "'" & tipodocumento & "', " _
+                  & "'" & TxtNroDocumento.Text & "', " _
+                  & "'" & TxtTelefono.Text & "', " _
+                  & "'" & TxtCodPostal.Text & "', " _
+                  & "'" & TxtNombreImagen.Text & "')"
+
+
+        comando_agregar.CommandText = sqlstr
+        comando_agregar.Connection = CN
+
+        If MsgBox("Confirma agregar el Registro?", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+
+
+            Try
+                CN.Open()
+            Catch ex As Exception
+
+            End Try
+
+
+            'Try
+            comando_agregar.ExecuteNonQuery()
+            'Catch ex As Exception
+            '    MessageBox.Show("Legajo Duplicado")
+            '    TxtCodSocio.Clear()
+            '    TxtCodSocio.Focus()
+            '    Exit Sub
+            'End Try
+
+
+
+
+
+            MessageBox.Show("Se ha Agregado el Registro", "Atención")
+
+            DA = New OleDb.OleDbDataAdapter("select * from socios order by codsocio asc", CN.ConnectionString)
+
+            DT.Clear()
+            DA.Fill(DT)
+            NroReg = 0
+
+            llenarform()
+
+            CN.Close()
+
+            GbxNavegador.Enabled = True
+            GbxModificadores.Enabled = True
+            BtnConfirmaModificacion.Visible = False
+
+            BtnConfirmarAgrega.Visible = False
+
+            TxtCodSocio.ReadOnly = True
+            TxtNombre.ReadOnly = True
+            TxtApellido.ReadOnly = True
+            TxtTipoDocumento.ReadOnly = True
+            TxtNroDocumento.ReadOnly = True
+            TxtDireccion.ReadOnly = True
+            TxtTelefono.ReadOnly = True
+            TxtCodPostal.ReadOnly = True
+
+            BtnCancelar.Visible = False
+
+        End If
+
+    End Sub
+
+
+
+    Private Sub BtnModificar_Click(sender As Object, e As EventArgs) Handles BtnModificar.Click
+        GbxNavegador.Enabled = False
+        GbxModificadores.Enabled = False
+        BtnConfirmaModificacion.Visible = True
+        BtnCancelar.Visible = True
+        BtnBuscaFoto.Visible = True
+        TxtNroDocumento.ReadOnly = False
+        TxtTipoDocumento.ReadOnly = False
+        TxtDireccion.ReadOnly = False
+        TxtTelefono.ReadOnly = False
+        TxtCodPostal.ReadOnly = False
+        TxtNombre.ReadOnly = False
+        TxtApellido.ReadOnly = False
+
+
+    End Sub
+
+    Private Sub OfdFotoEmpleado_FileOk(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles OfdFotoSocio.FileOk
+        nombrefoto = OfdFotoSocio.SafeFileName
+        ruta = "c:\Pablo_18hs\fotos\" & nombrefoto
+        PbxFotoSocio.ImageLocation = ruta
+        TxtNombreImagen.Text = OfdFotoSocio.SafeFileName
+    End Sub
+
+    Private Sub BtnSalir_Click(sender As Object, e As EventArgs) Handles BtnSalir.Click
+        Close()
+    End Sub
+
+    Private Sub BtnConfirmaModificacion_Click(sender As Object, e As EventArgs) Handles BtnConfirmaModificacion.Click
+
+        If IsNumeric(TxtTelefono.Text) Then
+        Else
+            MessageBox.Show("Ingrese una Valor Numérico", "Atención")
+            TxtTelefono.Clear()
+            TxtTelefono.Focus()
+            Exit Sub
+        End If
+
+        If IsNumeric(TxtNroDocumento.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtNroDocumento.Clear()
+            TxtNroDocumento.Focus()
+            Exit Sub
+        End If
+
+
+        Dim comando_modificar As New OleDb.OleDbCommand()
+        Dim Nombre, apellido, direccion, tipodocumento As String
+
+        Nombre = UCase(Trim(TxtNombre.Text))
+        apellido = UCase(Trim(TxtApellido.Text))
+        direccion = UCase(Trim(TxtDireccion.Text))
+        tipodocumento = UCase(Trim(TxtTipoDocumento.Text))
+
+        sqlstr =
+            "update socios set nombre='" & Nombre &
+            "', apellido='" & apellido &
+            "', direccion='" & direccion &
+            "', nrodocumento='" & TxtNroDocumento.Text &
+            "', tipodocumento='" & tipodocumento &
+            "', codpostal=" & "'" & TxtCodPostal.Text &
+            "', telefono ='" & TxtTelefono.Text &
+            "', foto='" & TxtNombreImagen.Text &
+            "' where codsocio= " & TxtCodSocio.Text
+
+        comando_modificar.CommandText = sqlstr
+        comando_modificar.Connection = CN
+
+        If MsgBox("Confirma agregar el Registro?", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+            Try
+                CN.Open()
+            Catch ex As Exception
+
+            End Try
+            comando_modificar.ExecuteNonQuery()
+
+
+            MessageBox.Show("Se ha Modificado el Registro", "Atención")
+
+            DA = New OleDb.OleDbDataAdapter("select * from socios order by codsocio asc", CN.ConnectionString)
+
+            DT.Clear()
+            DA.Fill(DT)
+            NroReg = 0
+
+            llenarform()
+
+            CN.Close()
+            GbxNavegador.Enabled = True
+            GbxModificadores.Enabled = True
+            BtnConfirmaModificacion.Visible = False
+            BtnBuscaFoto.Visible = False
+            BtnConfirmarAgrega.Visible = False
+            TxtCodSocio.ReadOnly = True
+            TxtNombre.ReadOnly = True
+            TxtApellido.ReadOnly = True
+            TxtTipoDocumento.ReadOnly = True
+            TxtNroDocumento.ReadOnly = True
+            TxtDireccion.ReadOnly = True
+            TxtTelefono.ReadOnly = True
+            TxtCodPostal.ReadOnly = True
+
+            BtnCancelar.Visible = False
+
+
+        End If
+    End Sub
+
+    Private Sub BtnCancelar_Click(sender As Object, e As EventArgs) Handles BtnCancelar.Click
+        GbxNavegador.Enabled = True
+        GbxModificadores.Enabled = True
+        BtnConfirmaModificacion.Visible = False
+        BtnConfirmarAgrega.Visible = False
+        BtnBuscaFoto.Visible = False
+
+        TxtCodSocio.ReadOnly = True
+        TxtNombre.ReadOnly = True
+        TxtApellido.ReadOnly = True
+        TxtTipoDocumento.ReadOnly = True
+        TxtNroDocumento.ReadOnly = True
+        TxtDireccion.ReadOnly = True
+        TxtTelefono.ReadOnly = True
+        TxtCodPostal.ReadOnly = True
+        BtnCancelar.Visible = False
+
+
+
+        CN.Open()
+
+        DA = New OleDb.OleDbDataAdapter("select * from socios order by codsocio asc", CN.ConnectionString)
+
+        DT.Clear()
+        DA.Fill(DT)
+        NroReg = 0
+        llenarform()
+
+        CN.Close()
+
+    End Sub
+
+    Private Sub BtnBuscaFoto_Click(sender As Object, e As EventArgs) Handles BtnBuscaFoto.Click
+        OfdFotoSocio.InitialDirectory = "c:\Pablo_18hs\fotos\"
+        OfdFotoSocio.ShowDialog()
+
+    End Sub
+
+    Private Sub BtnPrimerRegistro_Click(sender As Object, e As EventArgs) Handles BtnPrimerRegistro.Click
+        NroReg = 0
+        llenarform()
+    End Sub
+
+
+End Class
