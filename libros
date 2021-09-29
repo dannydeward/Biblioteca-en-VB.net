@@ -1,0 +1,440 @@
+mABMLibros
+    'Se declaran las variables para el formulario de ABM de libro
+    Dim DA As New OleDb.OleDbDataAdapter
+    Dim DT As New DataTable
+    Dim NroReg, cantidadregistros As Integer
+    Dim sqlstr, ruta, nombrefoto, nombrefotoruta As String
+
+
+
+    Private Sub frmabmlibros_Load(sender As Object, e As EventArgs) Handles MyBase.Load
+
+        NroReg = 0
+
+        Try
+            CN.Open()
+        Catch ex As Exception
+
+        End Try
+
+
+
+        DA = New OleDb.OleDbDataAdapter("SELECT * from libros order by codlibro asc", CN.ConnectionString)
+
+        DT.Clear()
+        DA.Fill(DT)
+        NroReg = 0
+        llenarform()
+
+        CN.Close()
+    End Sub
+
+
+    Private Sub llenarform()
+        'llenar los textbox del formulario con los datos de la base
+
+
+
+        Try
+            TxtAutor.Text = DT.Rows(NroReg)("autor")
+            TxtCategoria.Text = DT.Rows(NroReg)("categoria")
+            TxtCodigo.Text = DT.Rows(NroReg)("codlibro")
+            TxtEjemplar.Text = DT.Rows(NroReg)("ejemplar")
+            TxtEstante.Text = DT.Rows(NroReg)("estante")
+            TxtPasillo.Text = DT.Rows(NroReg)("Pasillo")
+            TxtTitulo.Text = DT.Rows(NroReg)("titulo")
+        Catch ex As Exception
+            'TxtAutor.Text = ""
+            'TxtCategoria.Text = ""
+            'Txtcodlibro.Text = ""
+            'TxtEjemplar.Text = ""
+            'TxtEstante.Text = ""
+            'TxtPasillo.Text = ""
+            'TxtTitulo.Text = ""
+        End Try
+
+
+
+
+    End Sub
+
+    Private Sub BtnUltimoRegistro_Click(sender As Object, e As EventArgs) Handles BtnUltimoRegistro.Click
+
+        'Boton que nos lleva al último registro de la tabla, 
+        cantidadregistros = DT.Rows.Count 'almacena la cantidad de registros
+        NroReg = cantidadregistros - 1 'resta 1 a la cantidad de registros de la tabla
+
+        llenarform() ' llena el formulario de acuerdo al registro sobre el que está parado
+    End Sub
+
+    Private Sub BtnAvance_Click(sender As Object, e As EventArgs) Handles BtnAvance.Click
+        'Boton para retroceder sobre los registros, se utiliza un TRY para evitar el error al llegar al primer registro.
+        Try
+            NroReg = NroReg + 1 'suma de a 1 registro y va llenando el formulario.
+            llenarform()
+        Catch ex As Exception
+            NroReg = NroReg - 1 'en caso que llegue al final y de error, resta 1 a la cantidad de regitros y vuelve a llenar el formulario
+            llenarform()
+        End Try
+
+    End Sub
+
+    Private Sub BtnRetroceso_Click(sender As Object, e As EventArgs) Handles BtnRetroceso.Click
+        'Boton para retroceder sobre los registros, se utiliza un TRY para evitar el error al llegar al primer registro.
+        '
+        Try
+            NroReg = NroReg - 1 'resta de a 1 el nro de registro y va llenando el formulario.
+            llenarform()
+        Catch ex As Exception
+            NroReg = NroReg + 1 'en caso que llegue al final y de error, suma 1 a la cantidad de regitros y vuelve a llenar el formulario
+            llenarform()
+        End Try
+
+    End Sub
+
+    Private Sub BtnEliminar_Click(sender As Object, e As EventArgs) Handles BtnEliminar.Click
+        'Boton eliminar registro, procede a eliminar el registro sobre el cual estamos parados.
+        'se dimenciona el comando para borrar "comando_borrar", el comando usa el sqlstr como string sql y la conexión CN
+        'mustra el message box para esperar la respuesta y de acuerdo a la respuesta acciona o no el comando.
+        'Al finalizar muestra el registro y cierra la conexión.
+        Dim comando_borrar As New OleDb.OleDbCommand()
+
+        sqlstr = "delete * from libros where codlibro=" & TxtCodigo.Text
+
+        comando_borrar.CommandText = sqlstr
+        comando_borrar.Connection = CN
+        If TxtCodigo.Text > "" Then 'se comrpueba si hay un valor en el txt de codigo para saber evitar un error al querer eliminar registros vacios.
+
+            If MsgBox("Desea Borrar el Registro Actual", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+                CN.Open()
+                comando_borrar.ExecuteNonQuery()
+
+                MessageBox.Show("Se ha Eliminado el Registro", "Atención")
+                TxtCategoria.Clear()
+                TxtEjemplar.Clear()
+                TxtPasillo.Clear()
+                TxtAutor.Clear()
+                TxtCodigo.Clear()
+                TxtTitulo.Clear()
+                TxtEstante.Clear()
+                DA = New OleDb.OleDbDataAdapter("select * from libros order by codlibro asc", CN.ConnectionString)
+
+                DT.Clear()
+                DA.Fill(DT)
+                cantidadregistros = DT.Rows.Count
+                NroReg = 0
+                llenarform()
+
+                CN.Close()
+            Else
+            End If
+
+        End If
+
+
+    End Sub
+
+    Private Sub BtnAgregar_Click(sender As Object, e As EventArgs) Handles BtnAgregar.Click
+        GbxNavegador.Enabled = False
+        GbxModificadores.Enabled = False
+        BtnCancelar.Visible = True
+        TxtCodigo.ReadOnly = False
+        TxtEjemplar.ReadOnly = False
+        TxtPasillo.ReadOnly = False
+        TxtAutor.ReadOnly = False
+        TxtTitulo.ReadOnly = False
+        TxtEstante.ReadOnly = False
+        TxtCategoria.ReadOnly = False
+
+        TxtCategoria.Clear()
+        TxtEjemplar.Clear()
+        TxtPasillo.Clear()
+        TxtAutor.Clear()
+        TxtCodigo.Clear()
+        TxtTitulo.Clear()
+        TxtEstante.Clear()
+
+        BtnConfirmarAgrega.Visible = True
+
+
+    End Sub
+
+
+
+    Private Sub BtnConfirmarAgrega_Click(sender As Object, e As EventArgs) Handles BtnConfirmarAgrega.Click
+
+        If IsNumeric(TxtCodigo.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtCodigo.Clear()
+            TxtCodigo.Focus()
+            Exit Sub
+        End If
+
+        If IsNumeric(TxtPasillo.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtPasillo.Clear()
+            TxtPasillo.Focus()
+            Exit Sub
+        End If
+
+        If IsNumeric(TxtEstante.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtEstante.Clear()
+            TxtEstante.Focus()
+            Exit Sub
+        End If
+
+
+        Dim comando_agregar As New OleDb.OleDbCommand()
+        Dim titulo, autor, categoria As String
+
+        titulo = UCase(Trim(TxtTitulo.Text))
+        autor = UCase(Trim(TxtAutor.Text))
+        categoria = UCase(Trim(TxtCategoria.Text))
+        sqlstr = "Insert Into libros(codlibro,titulo,categoria,pasillo,estante,autor,ejemplar) " _
+               & "Values (" & "'" & TxtCodigo.Text & "', " _
+               & "'" & titulo & "', " _
+               & "'" & categoria & "', " _
+               & "'" & TxtPasillo.Text & "', " _
+               & "'" & TxtEstante.Text & "', " _
+               & "'" & autor & "', " _
+               & "'" & TxtEjemplar.Text & "')"
+
+
+        comando_agregar.CommandText = sqlstr
+        comando_agregar.Connection = CN
+
+        If MsgBox("Confirma agregar el Registro?", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+
+
+            Try
+                CN.Open()
+            Catch ex As Exception
+
+            End Try
+
+
+            Try
+                comando_agregar.ExecuteNonQuery()
+            Catch ex As Exception
+                MessageBox.Show("Codigo de libro Duplicado")
+                TxtCodigo.Clear()
+                TxtCodigo.Focus()
+                Exit Sub
+            End Try
+
+
+
+
+
+            MessageBox.Show("Se ha Agregado el Registro", "Atención")
+
+            DA = New OleDb.OleDbDataAdapter("select * from libros order by codlibro asc", CN.ConnectionString)
+
+            DT.Clear()
+            DA.Fill(DT)
+            NroReg = 0
+
+            llenarform()
+
+            CN.Close()
+
+            GbxNavegador.Enabled = True
+            GbxModificadores.Enabled = True
+            BtnConfirmaModificacion.Visible = False
+
+            BtnConfirmarAgrega.Visible = False
+            TxtEjemplar.ReadOnly = True
+            TxtPasillo.ReadOnly = True
+            TxtAutor.ReadOnly = True
+            TxtTitulo.ReadOnly = True
+            TxtCodigo.ReadOnly = True
+            TxtEstante.ReadOnly = True
+            TxtCategoria.ReadOnly = True
+
+
+            BtnCancelar.Visible = False
+
+        End If
+
+    End Sub
+
+    Private Sub BtnSalir_Click(sender As Object, e As EventArgs) Handles BtnSalir.Click
+        GbxNavegador.Enabled = True
+        GbxModificadores.Enabled = True
+        BtnConfirmaModificacion.Visible = False
+        BtnConfirmarAgrega.Visible = False
+        BtnCancelar.Visible = False
+
+        TxtEjemplar.ReadOnly = True
+        TxtPasillo.ReadOnly = True
+        TxtAutor.ReadOnly = True
+        TxtTitulo.ReadOnly = True
+        TxtCodigo.ReadOnly = True
+        TxtCategoria.ReadOnly = True
+        TxtEstante.ReadOnly = True
+        TxtCategoria.ReadOnly = True
+
+        Close()
+    End Sub
+
+    Private Sub BtnModificar_Click(sender As Object, e As EventArgs) Handles BtnModificar.Click
+        GbxNavegador.Enabled = False
+        GbxModificadores.Enabled = False
+        BtnConfirmaModificacion.Visible = True
+        BtnCancelar.Visible = True
+        TxtEjemplar.ReadOnly = False
+        TxtPasillo.ReadOnly = False
+        TxtAutor.ReadOnly = False
+        TxtTitulo.ReadOnly = False
+        TxtEstante.ReadOnly = False
+        TxtCategoria.ReadOnly = False
+
+    End Sub
+
+
+
+
+    Private Sub BtnConfirmaModificacion_Click(sender As Object, e As EventArgs) Handles BtnConfirmaModificacion.Click
+
+
+        If IsNumeric(TxtPasillo.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtPasillo.Clear()
+            TxtPasillo.Focus()
+            Exit Sub
+        End If
+
+        If IsNumeric(TxtEstante.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtEstante.Clear()
+            TxtEstante.Focus()
+            Exit Sub
+
+        End If
+
+        If IsNumeric(TxtEjemplar.Text) Then
+        Else
+            MessageBox.Show("Ingrese un Valor Numérico", "Atención")
+            TxtEjemplar.Clear()
+            TxtEjemplar.Focus()
+            Exit Sub
+        End If
+
+        Dim comando_modificar As New OleDb.OleDbCommand()
+        Dim titulo, autor, categoria As String
+
+        titulo = UCase(Trim(TxtTitulo.Text))
+        categoria = UCase(Trim(TxtCategoria.Text))
+        autor = UCase(Trim(TxtAutor.Text))
+
+        sqlstr =
+            "update libros set titulo='" & titulo &
+            "', pasillo='" & TxtPasillo.Text &
+            "', categoria='" & TxtCategoria.Text &
+            "', ejemplar='" & TxtEjemplar.Text &
+            "', estante=" & "'" & TxtEstante.Text &
+            "', autor ='" & TxtAutor.Text &
+            "' where codlibro= " & TxtCodigo.Text
+
+        '"update empleados set nombre='" & TxtNombre.Text & "', fecha=#19/02/2009#, Basico=22222, Premio=222, casado=false, area='GERENCIA', foto='1.jpeg' where legajo=2011"
+
+        '"Update Empleados set nombre='" & Nombre & "', Fecha=" & TxtFechaIng.Text & ", Basico=" & TxtBasico.Text & ", Premio=" & TxtPremio.Text & ", Casado=" & ChkCasado.Checked & ", Area='" & CmbArea.SelectedItem & "', foto='" & TxtNombreImagen.Text & "', where legajo=" & TxtLegajo.Text
+
+
+
+        comando_modificar.CommandText = sqlstr
+        comando_modificar.Connection = CN
+
+        If MsgBox("Confirma agregar el Registro?", MsgBoxStyle.YesNo, "Atención") = MsgBoxResult.Yes Then
+
+            Try
+                CN.Open()
+            Catch ex As Exception
+
+            End Try
+            comando_modificar.ExecuteNonQuery()
+
+
+            MessageBox.Show("Se ha Modificado el Registro", "Atención")
+
+            DA = New OleDb.OleDbDataAdapter("select * from libros order by codlibro asc", CN.ConnectionString)
+
+            DT.Clear()
+            DA.Fill(DT)
+            NroReg = 0
+
+            llenarform()
+
+            CN.Close()
+            GbxNavegador.Enabled = True
+            GbxModificadores.Enabled = True
+            BtnConfirmaModificacion.Visible = False
+
+            BtnConfirmarAgrega.Visible = False
+            TxtEjemplar.ReadOnly = True
+            TxtPasillo.ReadOnly = True
+            TxtAutor.ReadOnly = True
+            TxtTitulo.ReadOnly = True
+            TxtCodigo.ReadOnly = True
+            TxtEstante.ReadOnly = True
+            TxtCategoria.ReadOnly = True
+            BtnCancelar.Visible = False
+
+
+        End If
+    End Sub
+
+    Private Sub BtnCancelar_Click(sender As Object, e As EventArgs) Handles BtnCancelar.Click
+        GbxNavegador.Enabled = True
+        GbxModificadores.Enabled = True
+        BtnConfirmaModificacion.Visible = False
+        BtnConfirmarAgrega.Visible = False
+
+        TxtEjemplar.ReadOnly = True
+        TxtPasillo.ReadOnly = True
+        TxtAutor.ReadOnly = True
+        TxtTitulo.ReadOnly = True
+        TxtCodigo.ReadOnly = True
+        TxtCategoria.ReadOnly = True
+        TxtEstante.ReadOnly = True
+        TxtCategoria.ReadOnly = True
+
+
+
+        BtnCancelar.Visible = False
+
+
+        NroReg = 0
+
+        Try
+            CN.Open()
+        Catch ex As Exception
+
+        End Try
+        DA = New OleDb.OleDbDataAdapter("select * from libros order by codlibro asc", CN.ConnectionString)
+
+        DT.Clear()
+        DA.Fill(DT)
+        NroReg = 0
+        llenarform()
+
+        CN.Close()
+
+    End Sub
+
+
+    Private Sub BtnPrimerRegistro_Click(sender As Object, e As EventArgs) Handles BtnPrimerRegistro.Click
+        NroReg = 0
+        llenarform()
+    End Sub
+
+
+End Class
