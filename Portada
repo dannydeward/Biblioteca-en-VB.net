@@ -1,0 +1,9 @@
+Public Class FrmInicial
+    Private Sub BtnABMSocios_Click(sender As Object, e As EventArgs) Handles BtnABMSocios.Click
+        FrmABMSocios.ShowDialog()
+    End Sub
+
+    Private Sub BtnABMLibros_Click(sender As Object, e As EventArgs) Handles BtnABMLibros.Click
+        FrmABMLibros.ShowDialog()
+    End Sub
+End Class
